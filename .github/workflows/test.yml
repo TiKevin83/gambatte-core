@@ -10,10 +10,18 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v2
         with:
-          path: gambatte-speedrun
+          path: gambatte-core
       
       - name: Assemble TestROMs
-        run: "cd gambatte-speedrun/test && sh scripts/assemble_tests.sh"
+        run: "cd gambatte-core/test && sh scripts/assemble_tests.sh"
 
       - name: Build libgambatte and run tests
-        run: "cd gambatte-speedrun && sh scripts/test.sh"
+        run: "cd gambatte-core && sh scripts/test.sh"
+      
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: shared-library
+          path: |
+            **/*.so
+            **/*.dll
