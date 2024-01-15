@@ -15,6 +15,10 @@
         </style>
     </head>
     <body>
+        <label for="gameRom">Game ROM</label>
+        <input type="file" id="gameRom"/>
+        <label for="gbcBios">GBC Bios</label>
+        <input type="file" id="gbcBios"/>
         <canvas id="gameboy" width="160" height="144"></canvas>
         <script>
             var result = Module.onRuntimeInitialized = () => {
@@ -26,33 +30,68 @@
                 const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
                 console.log('revision: ' + gambatte_revision());
 
-                fetch('pokered.gbc').then(romRsponse => romRsponse.arrayBuffer()).then(romData => {
-                    fetch('gbc_bios.bin').then(biosResponse => biosResponse.arrayBuffer()).then(biosData => {
-                        const romPath = 'rom.gbc';
-                        const biosPath = 'bios.bin';
-                        FS.writeFile(romPath, new Uint8Array(romData));
-                        FS.writeFile(biosPath, new Uint8Array(biosData));
+                let romFile;
+                let biosFile;
+                let romData;
+                let biosData;
 
-                        const gb = gambatte_create();
-                        console.log('rom load: ' + gambatte_load(gb, romPath, 3));
-                        console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
+                const romFileInput = document.getElementById("gameRom");
+                const biosFileInput = document.getElementById("gbcBios");
+                romFileInput.addEventListener("change", e => {
+                    romFile = e.target.files[0];
+                    romFile.arrayBuffer().then(arrayBuffer => {
+                      romData = arrayBuffer;
+                      if (romData && biosData) {
+                        handleGameChange();
+                      }
+                    });
+                }, false);
+                biosFileInput.addEventListener("change", e => {
+                    biosFile = e.target.files[0];
+                    biosFile.arrayBuffer().then(arrayBuffer => {
+                        biosData = arrayBuffer;
+                        if (romData && biosData) {
+                            handleGameChange();
+                        }
+                    })
+                }, false);
 
-                        const videoBuffer = Module._malloc(160 * 144 * 4);
-                        const audioBuffer = Module._malloc((35112 + 2064) * 4);
-                        const samples = Module._malloc(4);
+                const handleGameChange = () => {
+                    const romPath = romFile.name;
+                    const biosPath = biosFile.name;
+                    FS.writeFile(romPath, new Uint8Array(romData));
+                    FS.writeFile(biosPath, new Uint8Array(biosData));
 
-                        const backbuffer = new ImageData(160, 144);
+                    const gb = gambatte_create();
+                    console.log('rom load: ' + gambatte_load(gb, romPath, 3));
+                    console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
 
-                        const renderer = document.createElement('canvas');
-                        const rendererContext = renderer.getContext('2d');
-                        renderer.width = backbuffer.width;
-                        renderer.height = backbuffer.height;                        
+                    const videoBuffer = Module._malloc(160 * 144 * 4);
+                    const audioBuffer = Module._malloc((35112 + 2064) * 4);
+                    const samples = Module._malloc(4);
 
-                        const presenter = document.getElementById('gameboy');
-                        const presenterContext = presenter.getContext('2d');
+                    const backbuffer = new ImageData(160, 144);
 
-                        setInterval(() => {
-                            setValue(samples, 35112, 'i32');
+                    const renderer = document.createElement('canvas');
+                    const rendererContext = renderer.getContext('2d');
+                    renderer.width = backbuffer.width;
+                    renderer.height = backbuffer.height;                        
+
+                    const presenter = document.getElementById('gameboy');
+                    const presenterContext = presenter.getContext('2d');
+
+                    let lastRenderTime = performance.now();
+                    let overrun = 0;
+                    const cyclesPerFrame = 35112;
+                    const frameMs = 1000 * cyclesPerFrame / 2097152;
+
+                    const renderLoop = () => {
+                        const currentRenderTime = performance.now();
+                        const timePassed = currentRenderTime + overrun - lastRenderTime;
+                        if (timePassed > frameMs) {
+                            lastRenderTime = currentRenderTime;
+                            overrun = timePassed - frameMs;
+                            setValue(samples, cyclesPerFrame, 'i32');
                             gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
 
                             for (let i = 0; i < backbuffer.data.length; i += 4) {
@@ -65,9 +104,11 @@
 
                             rendererContext.putImageData(backbuffer, 0, 0);
                             presenterContext.drawImage(renderer, 0, 0);
-                        }, 1);
-                    })
-                });
+                        }
+                    };
+
+                    setInterval(renderLoop, 1);
+                }
             }
         </script>
     </body>
