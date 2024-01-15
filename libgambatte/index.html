@@ -1,0 +1,74 @@
+<html>
+    <head>
+        <script src="./libgambatte.js"></script>^
+        <style>
+            canvas {
+                image-rendering: optimizeSpeed;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: optimize-contrast;
+                image-rendering: pixelated;
+                -ms-interpolation-mode: nearest-neighbor;
+                width: 800px;
+                height: 720px;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="gameboy" width="160" height="144"></canvas>
+        <script>
+            var result = Module.onRuntimeInitialized = () => {
+                const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
+                const gambatte_create = Module.cwrap('gambatte_create', 'number');
+                const gambatte_load = Module.cwrap('gambatte_load', 'number', ['number', 'string', 'number']);
+                const gambatte_loadbios = Module.cwrap('gambatte_loadbios', 'number', ['number', 'string', 'number', 'number']);
+                const gambatte_cpuread = Module.cwrap('gambatte_cpuread', 'number', ['number', 'number']);
+                const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
+                console.log('revision: ' + gambatte_revision());
+
+                fetch('pokered.gbc').then(romRsponse => romRsponse.arrayBuffer()).then(romData => {
+                    fetch('gbc_bios.bin').then(biosResponse => biosResponse.arrayBuffer()).then(biosData => {
+                        const romPath = 'rom.gbc';
+                        const biosPath = 'bios.bin';
+                        FS.writeFile(romPath, new Uint8Array(romData));
+                        FS.writeFile(biosPath, new Uint8Array(biosData));
+
+                        const gb = gambatte_create();
+                        console.log('rom load: ' + gambatte_load(gb, romPath, 3));
+                        console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
+
+                        const videoBuffer = Module._malloc(160 * 144 * 4);
+                        const audioBuffer = Module._malloc((35112 + 2064) * 4);
+                        const samples = Module._malloc(4);
+
+                        const backbuffer = new ImageData(160, 144);
+
+                        const renderer = document.createElement('canvas');
+                        const rendererContext = renderer.getContext('2d');
+                        renderer.width = backbuffer.width;
+                        renderer.height = backbuffer.height;                        
+
+                        const presenter = document.getElementById('gameboy');
+                        const presenterContext = presenter.getContext('2d');
+
+                        setInterval(() => {
+                            setValue(samples, 35112, 'i32');
+                            gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
+
+                            for (let i = 0; i < backbuffer.data.length; i += 4) {
+                                const pixel = getValue(videoBuffer + i, 'i32');
+                                backbuffer.data[i + 0] = (pixel >> 16) & 0xff;
+                                backbuffer.data[i + 1] = (pixel >> 8) & 0xff;
+                                backbuffer.data[i + 2] = (pixel >> 0) & 0xff;
+                                backbuffer.data[i + 3] = (pixel >> 24) & 0xff;
+                            }
+
+                            rendererContext.putImageData(backbuffer, 0, 0);
+                            presenterContext.drawImage(renderer, 0, 0);
+                        }, 1);
+                    })
+                });
+            }
+        </script>
+    </body>
+</html>

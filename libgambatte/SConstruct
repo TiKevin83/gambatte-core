@@ -11,6 +11,8 @@ env = Environment(ENV = os.environ,
                   CFLAGS = global_cflags + global_defines,
                   CXXFLAGS = global_cxxflags + global_defines,
                   variables = vars)
+env['CC'] = 'emcc'
+env['CXX'] = 'em++'
 
 sourceFiles = Split('''
 			src/bitmap_font.cpp
@@ -84,8 +86,6 @@ else:
 
 conf.Finish()
 
-lib = env.Library('gambatte', sourceFiles)
-
 def rev():
 	try:
 		from subprocess import check_output, CalledProcessError
@@ -98,11 +98,12 @@ import sys
 if sys.platform == 'darwin':
 	sys_libs.append('System')
 
-shlib = env.SharedLibrary('gambatte', sourceFiles + ['src/cinterface.cpp'],
-                          CXXFLAGS = env['CXXFLAGS'] + ' -DSHLIB' + rev(),
-                          LINKFLAGS = env['LINKFLAGS'] + ' -s',
-                          LIBS = sys_libs,
-                          SHLIBPREFIX = "lib")
+emscripten_linkflags = '-sEXPORTED_RUNTIME_METHODS=cwrap -sEXPORTED_FUNCTIONS=_gambatte_revision,_gambatte_create,_gambatte_load,_gambatte_loadbios,_gambatte_cpuread,_gambatte_runfor,_malloc,_free -s FORCE_FILESYSTEM=1'
+shlib = env.Program('libgambatte', sourceFiles + ['src/cinterface.cpp'],
+                        CXXFLAGS = env['CXXFLAGS'] + ' -DSHLIB' + rev(),
+                        LINKFLAGS = env['LINKFLAGS'] + ' -s ' + emscripten_linkflags,
+                        PROGSUFFIX = '.js',
+                        LIBS = sys_libs,)
 
-env.Default(lib)
+env.Default(shlib)
 env.Alias('shlib', shlib)
