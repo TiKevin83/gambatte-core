@@ -15,5 +15,7 @@ jobs:
       - name: Assemble TestROMs
         run: "cd gambatte-speedrun/test && sh scripts/assemble_tests.sh"
 
+      - uses: mymindstorm/setup-emsdk@v13
+
       - name: Build libgambatte and run tests
         run: "cd gambatte-speedrun && sh scripts/test.sh"
