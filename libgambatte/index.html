@@ -1,6 +1,7 @@
 <html>
     <head>
-        <script src="./libgambatte.js"></script>^
+        <script src="./libgambatte.js"></script>
+        <script src="./crc32.js"></script>
         <style>
             canvas {
                 image-rendering: optimizeSpeed;
@@ -19,6 +20,8 @@
         <input type="file" id="gameRom"/>
         <label for="gbcBios">GBC Bios</label>
         <input type="file" id="gbcBios"/>
+        <p>ROM Checksum: </p>
+        <p id="romHash"></p>
         <canvas id="gameboy" width="160" height="144"></canvas>
         <script>
             var result = Module.onRuntimeInitialized = () => {
@@ -28,6 +31,84 @@
                 const gambatte_loadbios = Module.cwrap('gambatte_loadbios', 'number', ['number', 'string', 'number', 'number']);
                 const gambatte_cpuread = Module.cwrap('gambatte_cpuread', 'number', ['number', 'number']);
                 const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
+                const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
+
+                let buttonsHeld = 0;
+
+                window.addEventListener("keydown", (event) => {
+                    const left = 37;
+                    const up = 38;
+                    const right = 39;
+                    const down = 40;
+                    const zForSelectButton = 90;
+                    const xForStartButton = 88;
+                    const cForBButton = 67;
+                    const vForAButton = 86;
+                    
+                    if (event.keyCode === vForAButton) {
+                        buttonsHeld |= 0x01;
+                    }
+                    if (event.keyCode === cForBButton) {
+                        buttonsHeld |= 0x02;
+                    }
+                    if (event.keyCode === zForSelectButton) {
+                        buttonsHeld |= 0x04;
+                    }
+                    if (event.keyCode === xForStartButton) {
+                        buttonsHeld |= 0x08;
+                    }
+                    if (event.keyCode === right) {
+                        buttonsHeld |= 0x10;
+                    }
+                    if (event.keyCode === left) {
+                        buttonsHeld |= 0x20;
+                    }
+                    if (event.keyCode === up) {
+                        buttonsHeld |= 0x40;
+                    }
+                    if (event.keyCode === down) {
+                        buttonsHeld |= 0x80;
+                    }
+                });
+
+                window.addEventListener("keyup", (event) => {
+                    const left = 37;
+                    const up = 38;
+                    const right = 39;
+                    const down = 40;
+                    const zForSelectButton = 90;
+                    const xForStartButton = 88;
+                    const cForBButton = 67;
+                    const vForAButton = 86;
+                    
+                    if (event.keyCode === vForAButton) {
+                        buttonsHeld &= ~0x01;
+                    }
+                    if (event.keyCode === cForBButton) {
+                        buttonsHeld &= ~0x02;
+                    }
+                    if (event.keyCode === zForSelectButton) {
+                        buttonsHeld &= ~0x04;
+                    }
+                    if (event.keyCode === xForStartButton) {
+                        buttonsHeld &= ~0x08;
+                    }
+                    if (event.keyCode === right) {
+                        buttonsHeld &= ~0x10;
+                    }
+                    if (event.keyCode === left) {
+                        buttonsHeld &= ~0x20;
+                    }
+                    if (event.keyCode === up) {
+                        buttonsHeld &= ~0x40;
+                    }
+                    if (event.keyCode === down) {
+                        buttonsHeld &= ~0x80;
+                    }
+                });
+
+                const callback = Module.addFunction((unused) => buttonsHeld, 'ii');
+
                 console.log('revision: ' + gambatte_revision());
 
                 let romFile;
@@ -59,12 +140,15 @@
                 const handleGameChange = () => {
                     const romPath = romFile.name;
                     const biosPath = biosFile.name;
+                    const romDataArray = new Uint8Array(romData);
+                    document.getElementById('romHash').innerText = (CRC32C.buf(romDataArray) >>> 0).toString(16);
                     FS.writeFile(romPath, new Uint8Array(romData));
                     FS.writeFile(biosPath, new Uint8Array(biosData));
 
                     const gb = gambatte_create();
                     console.log('rom load: ' + gambatte_load(gb, romPath, 3));
                     console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
+                    gambatte_setinputgetter(gb, callback, 0);
 
                     const videoBuffer = Module._malloc(160 * 144 * 4);
                     const audioBuffer = Module._malloc((35112 + 2064) * 4);
@@ -80,19 +164,52 @@
                     const presenter = document.getElementById('gameboy');
                     const presenterContext = presenter.getContext('2d');
 
-                    let lastRenderTime = performance.now();
-                    let overrun = 0;
+                    const sampleRate = 48000;
+
+                    const audioContext = new AudioContext({ sampleRate });
+
                     const cyclesPerFrame = 35112;
-                    const frameMs = 1000 * cyclesPerFrame / 2097152;
+
+                    const resampleRatio = 2097152.0 / sampleRate;
+
+                    var time = 0;
+                    var lastBufferDuration = 0;
 
                     const renderLoop = () => {
-                        const currentRenderTime = performance.now();
-                        const timePassed = currentRenderTime + overrun - lastRenderTime;
-                        if (timePassed > frameMs) {
-                            lastRenderTime = currentRenderTime;
-                            overrun = timePassed - frameMs;
+                        if (audioContext.currentTime - time > 0.001 || time == 0) {
                             setValue(samples, cyclesPerFrame, 'i32');
                             gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
+                            const bytesProduced = getValue(samples, 'i32') * 4;
+
+                            const floatSamples = new Float32Array(bytesProduced / 2).fill(0);
+                            for (let i = 0; i < floatSamples.length; i++) {
+                                floatSamples[i] = (getValue(audioBuffer + i * 2, 'i16') / 32768.0);
+                            }
+
+                            const naiveResampled = new Float32Array(floatSamples.length / 4).fill(0);
+                            for (let i = 0; i < naiveResampled.length; i++) {
+                                naiveResampled[i] = floatSamples[i * 4];
+                            }
+
+                            const audioSamples = audioContext.createBuffer(2, naiveResampled.length / 2, 2097152 / 4);
+                            for (let channel = 0; channel < 2; channel++) {
+                                const channelSamples = audioSamples.getChannelData(channel);
+                                for (let sample = 0; sample < channelSamples.length; sample++) {
+                                    channelSamples[sample] = naiveResampled[sample * 2 + channel] * 0.05;
+                                }
+                            }
+
+                            const source = audioContext.createBufferSource();
+                            source.buffer = audioSamples;
+                            source.connect(audioContext.destination);
+
+                            if (time == 0) {
+                                time = audioContext.currentTime + 0.003;
+                            } else {
+                                time += lastBufferDuration;
+                            }
+                            lastBufferDuration = source.buffer.duration;
+                            source.start(time);
 
                             for (let i = 0; i < backbuffer.data.length; i += 4) {
                                 const pixel = getValue(videoBuffer + i, 'i32');
