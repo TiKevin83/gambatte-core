@@ -22,6 +22,7 @@
         <input type="file" id="gbcBios"/>
         <p>ROM Checksum: </p>
         <p id="romHash"></p>
+        <button id="pause">Pause</button>
         <canvas id="gameboy" width="160" height="144"></canvas>
         <script>
             var result = Module.onRuntimeInitialized = () => {
@@ -34,6 +35,7 @@
                 const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
 
                 let buttonsHeld = 0;
+                let animationFrame = 0;
 
                 window.addEventListener("keydown", (event) => {
                     const left = 37;
@@ -137,6 +139,8 @@
                     })
                 }, false);
 
+                const pauseInput = document.getElementById("pause");
+
                 const handleGameChange = () => {
                     const romPath = romFile.name;
                     const biosPath = biosFile.name;
@@ -222,9 +226,20 @@
                             rendererContext.putImageData(backbuffer, 0, 0);
                             presenterContext.drawImage(renderer, 0, 0);
                         }
+                        animationFrame = requestAnimationFrame(renderLoop);
                     };
 
-                    setInterval(renderLoop, 1);
+                    pauseInput.addEventListener("click", () => {
+                        if (pauseInput.innerText === "Pause") {
+                            pauseInput.innerText = "Play";
+                            cancelAnimationFrame(animationFrame);
+                        } else {
+                            pauseInput.innerText = "Pause";
+                            animationFrame = requestAnimationFrame(renderLoop);
+                        }
+                    });
+
+                    animationFrame = requestAnimationFrame(renderLoop);
                 }
             }
         </script>
