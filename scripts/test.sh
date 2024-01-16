@@ -2,6 +2,3 @@
 
 echo "cd libgambatte && scons"
 (cd libgambatte && scons) || exit
-
-echo "cd test && scons"
-(cd test && scons) || exit
