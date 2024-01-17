@@ -1,7 +1,7 @@
 /*! crc32.js (C) 2014-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
-/*exported CRC32C */
-var CRC32C;
+/*exported CRC32 */
+var CRC32;
 (function (factory) {
 	/*jshint ignore:start */
 	/*eslint-disable */
@@ -15,29 +15,29 @@ var CRC32C;
 				return module;
 			});
 		} else {
-			factory(CRC32C = {});
+			factory(CRC32 = {});
 		}
 	} else {
-		factory(CRC32C = {});
+		factory(CRC32 = {});
 	}
 	/*eslint-enable */
 	/*jshint ignore:end */
-}(function(CRC32C) {
-CRC32C.version = '1.2.3';
+}(function(CRC32) {
+CRC32.version = '1.2.3';
 /*global Int32Array */
 function signed_crc_table() {
 	var c = 0, table = new Array(256);
 
 	for(var n =0; n != 256; ++n){
 		c = n;
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
-		c = ((c&1) ? (-2097792136 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
+		c = ((c&1) ? (-306674912 ^ (c >>> 1)) : (c >>> 1));
 		table[n] = c;
 	}
 
@@ -105,11 +105,11 @@ function crc32_str(str, seed) {
 	}
 	return ~C;
 }
-CRC32C.table = T0;
+CRC32.table = T0;
 // $FlowIgnore
-CRC32C.bstr = crc32_bstr;
+CRC32.bstr = crc32_bstr;
 // $FlowIgnore
-CRC32C.buf = crc32_buf;
+CRC32.buf = crc32_buf;
 // $FlowIgnore
-CRC32C.str = crc32_str;
+CRC32.str = crc32_str;
 }));

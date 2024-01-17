@@ -116,7 +116,7 @@
                     const romPath = romFile.name;
                     const biosPath = biosFile.name;
                     const romDataArray = new Uint8Array(romData);
-                    document.getElementById('romHash').innerText = (CRC32C.buf(romDataArray) >>> 0).toString(16);
+                    document.getElementById('romHash').innerText = (CRC32.buf(romDataArray) >>> 0).toString(16);
                     FS.writeFile(romPath, new Uint8Array(romData));
                     FS.writeFile(biosPath, new Uint8Array(biosData));
 
@@ -156,6 +156,8 @@
                             gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
                             const bytesProduced = getValue(samples, 'i32') * 4;
 
+                            // process audio output
+
                             // divide by 2 channels, 2 bytes per 16 bit signed, and 4 to naively resample to 524k
                             const audioSamples = audioContext.createBuffer(2, bytesProduced / 16, 2097152 / 4);
                             const channel1Samples = audioSamples.getChannelData(0);
@@ -167,7 +169,7 @@
                             }
 
                             var gainNode = audioContext.createGain()
-                            gainNode.gain.value = 0.1 // 4 %
+                            gainNode.gain.value = 0.06 // 6 %
                             gainNode.connect(audioContext.destination)
 
                             const source = audioContext.createBufferSource();
@@ -178,6 +180,8 @@
 
                             lastBufferDuration = source.buffer.duration;
                             source.start(time);
+
+                            // process video output
 
                             for (let i = 0; i < backbuffer.data.length; i += 4) {
                                 const pixel = getValue(videoBuffer + i, 'i32');
