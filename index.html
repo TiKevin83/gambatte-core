@@ -1,0 +1,215 @@
+<html>
+    <head>
+        <script src="./libgambatte.js"></script>
+        <script src="./crc32.js"></script>
+        <style>
+            canvas {
+                image-rendering: optimizeSpeed;
+                image-rendering: -moz-crisp-edges;
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: optimize-contrast;
+                image-rendering: pixelated;
+                -ms-interpolation-mode: nearest-neighbor;
+                width: 800px;
+                height: 720px;
+            }
+        </style>
+    </head>
+    <body>
+        <label for="gameRom">Game ROM</label>
+        <input type="file" id="gameRom"/>
+        <label for="gbcBios">GBC Bios</label>
+        <input type="file" id="gbcBios"/>
+        <p>ROM Checksum: </p>
+        <p id="romHash"></p>
+        <button id="pause">Pause</button>
+        <canvas id="gameboy" width="160" height="144"></canvas>
+        <script>
+            var result = Module.onRuntimeInitialized = () => {
+                const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
+                const gambatte_create = Module.cwrap('gambatte_create', 'number');
+                const gambatte_load = Module.cwrap('gambatte_load', 'number', ['number', 'string', 'number']);
+                const gambatte_loadbios = Module.cwrap('gambatte_loadbios', 'number', ['number', 'string', 'number', 'number']);
+                const gambatte_cpuread = Module.cwrap('gambatte_cpuread', 'number', ['number', 'number']);
+                const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
+                const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
+
+                let buttonsHeld = 0;
+                let animationFrame = 0;
+
+                window.addEventListener("keydown", (event) => {
+                    event.preventDefault();
+                    const left = 37;
+                    const up = 38;
+                    const right = 39;
+                    const down = 40;
+                    const zForSelectButton = 90;
+                    const xForStartButton = 88;
+                    const cForBButton = 67;
+                    const vForAButton = 86;
+                    buttonsHeld |= 
+                        (event.keyCode === vForAButton) * 0x01 |
+                        (event.keyCode === cForBButton) * 0x02 |
+                        (event.keyCode === zForSelectButton) * 0x04 |
+                        (event.keyCode === xForStartButton) * 0x08 |
+                        (event.keyCode === right) * 0x10 |
+                        (event.keyCode === left) * 0x20 |
+                        (event.keyCode === up) * 0x40 |
+                        (event.keyCode === down) * 0x80;
+                });
+
+                window.addEventListener("keyup", (event) => {
+                    event.preventDefault();
+                    const left = 37;
+                    const up = 38;
+                    const right = 39;
+                    const down = 40;
+                    const zForSelectButton = 90;
+                    const xForStartButton = 88;
+                    const cForBButton = 67;
+                    const vForAButton = 86;
+
+                    buttonsHeld &=
+                        (event.keyCode !== vForAButton) * 0x01 |
+                        (event.keyCode !== cForBButton) * 0x02 |
+                        (event.keyCode !== zForSelectButton) * 0x04 |
+                        (event.keyCode !== xForStartButton) * 0x08 |
+                        (event.keyCode !== right) * 0x10 |
+                        (event.keyCode !== left) * 0x20 |
+                        (event.keyCode !== up) * 0x40 |
+                        (event.keyCode !== down) * 0x80;
+                });
+
+                const callback = Module.addFunction((unused) => buttonsHeld, 'ii');
+
+                console.log('revision: ' + gambatte_revision());
+
+                let romFile;
+                let biosFile;
+                let romData;
+                let biosData;
+
+                const romFileInput = document.getElementById("gameRom");
+                const biosFileInput = document.getElementById("gbcBios");
+                romFileInput.addEventListener("change", e => {
+                    romFile = e.target.files[0];
+                    romFile.arrayBuffer().then(arrayBuffer => {
+                      romData = arrayBuffer;
+                      if (romData && biosData) {
+                        handleGameChange();
+                      }
+                    });
+                }, false);
+                biosFileInput.addEventListener("change", e => {
+                    biosFile = e.target.files[0];
+                    biosFile.arrayBuffer().then(arrayBuffer => {
+                        biosData = arrayBuffer;
+                        if (romData && biosData) {
+                            handleGameChange();
+                        }
+                    })
+                }, false);
+
+                const pauseInput = document.getElementById("pause");
+
+                const handleGameChange = () => {
+                    const romPath = romFile.name;
+                    const biosPath = biosFile.name;
+                    const romDataArray = new Uint8Array(romData);
+                    document.getElementById('romHash').innerText = (CRC32.buf(romDataArray) >>> 0).toString(16);
+                    FS.writeFile(romPath, new Uint8Array(romData));
+                    FS.writeFile(biosPath, new Uint8Array(biosData));
+
+                    const gb = gambatte_create();
+                    console.log('rom load: ' + gambatte_load(gb, romPath, 3));
+                    console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
+                    gambatte_setinputgetter(gb, callback, 0);
+
+                    const videoBuffer = Module._malloc(160 * 144 * 4);
+                    const audioBuffer = Module._malloc((35112 + 2064) * 4);
+                    const samples = Module._malloc(4);
+
+                    const backbuffer = new ImageData(160, 144);
+
+                    const renderer = document.createElement('canvas');
+                    const rendererContext = renderer.getContext('2d');
+                    renderer.width = backbuffer.width;
+                    renderer.height = backbuffer.height;                        
+
+                    const presenter = document.getElementById('gameboy');
+                    const presenterContext = presenter.getContext('2d');
+
+                    const sampleRate = 48000;
+
+                    const audioContext = new AudioContext({ sampleRate });
+
+                    const cyclesPerFrame = 35112;
+
+                    const resampleRatio = 2097152.0 / sampleRate;
+
+                    let time = 0;
+                    let lastBufferDuration = 0;
+
+                    const renderLoop = () => {
+                        if (audioContext.currentTime - time > 0.001 || time == 0) {
+                            setValue(samples, cyclesPerFrame, 'i32');
+                            gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
+                            const bytesProduced = getValue(samples, 'i32') * 4;
+
+                            // process audio output
+
+                            // divide by 2 channels, 2 bytes per 16 bit signed, and 4 to naively resample to 524k
+                            const audioSamples = audioContext.createBuffer(2, bytesProduced / 16, 2097152 / 4);
+                            const channel1Samples = audioSamples.getChannelData(0);
+                            const channel2Samples = audioSamples.getChannelData(1);
+                            for (let sample = 0; sample < channel1Samples.length; sample++) {
+                                // inverse of the division by 16 when creating the buffer size, same logic
+                                channel1Samples[sample] = (getValue(audioBuffer + sample * 16, 'i16') / 32768.0)
+                                channel2Samples[sample] = (getValue(audioBuffer + sample * 16 + 2, 'i16') / 32768.0);
+                            }
+
+                            var gainNode = audioContext.createGain()
+                            gainNode.gain.value = 0.06 // 6 %
+                            gainNode.connect(audioContext.destination)
+
+                            const source = audioContext.createBufferSource();
+                            source.buffer = audioSamples;
+                            source.connect(gainNode);
+
+                            time = time == 0 ? audioContext.currentTime + 0.003 : time + lastBufferDuration;
+
+                            lastBufferDuration = source.buffer.duration;
+                            source.start(time);
+
+                            // process video output
+
+                            for (let i = 0; i < backbuffer.data.length; i += 4) {
+                                const pixel = getValue(videoBuffer + i, 'i32');
+                                backbuffer.data[i + 0] = (pixel >> 16) & 0xff;
+                                backbuffer.data[i + 1] = (pixel >> 8) & 0xff;
+                                backbuffer.data[i + 2] = (pixel >> 0) & 0xff;
+                                backbuffer.data[i + 3] = (pixel >> 24) & 0xff;
+                            }
+
+                            rendererContext.putImageData(backbuffer, 0, 0);
+                            presenterContext.drawImage(renderer, 0, 0);
+                        }
+                        animationFrame = requestAnimationFrame(renderLoop);
+                    };
+
+                    pauseInput.addEventListener("click", () => {
+                        if (pauseInput.innerText === "Pause") {
+                            pauseInput.innerText = "Play";
+                            cancelAnimationFrame(animationFrame);
+                        } else {
+                            pauseInput.innerText = "Pause";
+                            animationFrame = requestAnimationFrame(renderLoop);
+                        }
+                    });
+
+                    animationFrame = requestAnimationFrame(renderLoop);
+                }
+            }
+        </script>
+    </body>
+</html>
