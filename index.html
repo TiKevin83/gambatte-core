@@ -163,9 +163,13 @@
               channel2Samples[sample] = (getValue(audioBuffer + sample * 16 + 2, 'i16') / 32768.0);
             }
 
+            // reduce volume
+
             var gainNode = audioContext.createGain()
             gainNode.gain.value = 0.06 // 6 %
             gainNode.connect(audioContext.destination)
+
+            // play audio
 
             const source = audioContext.createBufferSource();
             source.buffer = audioSamples;
