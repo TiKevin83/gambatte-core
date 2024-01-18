@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -39,52 +40,57 @@
     </div>
   </div>
   <script>
-    var result = Module.onRuntimeInitialized = () => {
+    const gammaColor = (inputColor) => {
+      return Math.pow(inputColor / 255, 2.2)
+    }
+    const clampToUint8 = (input) => {
+      return Math.min(Math.max(input, 0), 255)
+    }
+    Module.onRuntimeInitialized = () => {
       const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
       const gambatte_create = Module.cwrap('gambatte_create', 'number');
       const gambatte_load = Module.cwrap('gambatte_load', 'number', ['number', 'string', 'number']);
       const gambatte_loadbios = Module.cwrap('gambatte_loadbios', 'number', ['number', 'string', 'number', 'number']);
-      const gambatte_cpuread = Module.cwrap('gambatte_cpuread', 'number', ['number', 'number']);
       const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
       const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
 
       let buttonsHeld = 0;
       let animationFrame = 0;
 
-      const left = 37;
-      const up = 38;
-      const right = 39;
-      const down = 40;
-      const zForSelectButton = 90;
-      const xForStartButton = 88;
-      const cForBButton = 67;
-      const vForAButton = 86;
+      const left = "37";
+      const up = "38";
+      const right = "39";
+      const down = "40";
+      const zForSelectButton = "90";
+      const xForStartButton = "88";
+      const cForBButton = "67";
+      const vForAButton = "86";
 
       window.addEventListener("keydown", (event) => {
         event.preventDefault();
         buttonsHeld |=
-          (event.keyCode === vForAButton) * 0x01 |
-          (event.keyCode === cForBButton) * 0x02 |
-          (event.keyCode === zForSelectButton) * 0x04 |
-          (event.keyCode === xForStartButton) * 0x08 |
-          (event.keyCode === right) * 0x10 |
-          (event.keyCode === left) * 0x20 |
-          (event.keyCode === up) * 0x40 |
-          (event.keyCode === down) * 0x80;
+          Number(event.code === vForAButton) * 0x01 |
+          Number(event.code === cForBButton) * 0x02 |
+          Number(event.code === zForSelectButton) * 0x04 |
+          Number(event.code === xForStartButton) * 0x08 |
+          Number(event.code === right) * 0x10 |
+          Number(event.code === left) * 0x20 |
+          Number(event.code === up) * 0x40 |
+          Number(event.code === down) * 0x80;
       });
 
       window.addEventListener("keyup", (event) => {
         event.preventDefault();
 
         buttonsHeld &=
-          (event.keyCode !== vForAButton) * 0x01 |
-          (event.keyCode !== cForBButton) * 0x02 |
-          (event.keyCode !== zForSelectButton) * 0x04 |
-          (event.keyCode !== xForStartButton) * 0x08 |
-          (event.keyCode !== right) * 0x10 |
-          (event.keyCode !== left) * 0x20 |
-          (event.keyCode !== up) * 0x40 |
-          (event.keyCode !== down) * 0x80;
+          Number(event.code !== vForAButton) * 0x01 |
+          Number(event.code !== cForBButton) * 0x02 |
+          Number(event.code !== zForSelectButton) * 0x04 |
+          Number(event.code !== xForStartButton) * 0x08 |
+          Number(event.code !== right) * 0x10 |
+          Number(event.code !== left) * 0x20 |
+          Number(event.code !== up) * 0x40 |
+          Number(event.code !== down) * 0x80;
       });
 
       const callback = Module.addFunction((unused) => buttonsHeld, 'ii');
@@ -100,24 +106,28 @@
       const biosFileInput = document.getElementById("gbcBios");
       romFileInput.addEventListener("change", e => {
         romFile = e.target.files[0];
-        romFile.arrayBuffer().then(arrayBuffer => {
+        romFile?.arrayBuffer().then(arrayBuffer => {
           romData = arrayBuffer;
           if (romData && biosData) {
             handleGameChange();
           }
         });
-      }, false);
+      });
       biosFileInput.addEventListener("change", e => {
         biosFile = e.target.files[0];
-        biosFile.arrayBuffer().then(arrayBuffer => {
+        biosFile?.arrayBuffer().then(arrayBuffer => {
           biosData = arrayBuffer;
           if (romData && biosData) {
             handleGameChange();
           }
         })
-      }, false);
+      });
 
       const pauseInput = document.getElementById("pause");
+
+      const videoBuffer = Module._malloc(160 * 144 * 4);
+      const audioBuffer = Module._malloc((35112 + 2064) * 4);
+      const samples = Module._malloc(4);
 
       const handleGameChange = () => {
         const romPath = romFile.name;
@@ -132,10 +142,6 @@
         console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
         gambatte_setinputgetter(gb, callback, 0);
 
-        const videoBuffer = Module._malloc(160 * 144 * 4);
-        const audioBuffer = Module._malloc((35112 + 2064) * 4);
-        const samples = Module._malloc(4);
-
         const backbuffer = new ImageData(160, 144);
 
         const renderer = document.createElement('canvas');
@@ -149,6 +155,12 @@
         const sampleRate = 48000;
 
         const audioContext = new AudioContext({ sampleRate });
+
+        // reduce volume
+
+        var gainNode = audioContext.createGain();
+        gainNode.gain.value = 0.06; // 6 %
+        gainNode.connect(audioContext.destination);
 
         const cyclesPerFrame = 35112;
 
@@ -176,12 +188,6 @@
             channel2Samples[sample] = (getValue(audioBuffer + sample * 16 + 2, 'i16') / 32768.0);
           }
 
-          // reduce volume
-
-          var gainNode = audioContext.createGain()
-          gainNode.gain.value = 0.06 // 6 %
-          gainNode.connect(audioContext.destination)
-
           // play audio
 
           const source = audioContext.createBufferSource();
@@ -197,10 +203,19 @@
 
           for (let i = 0; i < backbuffer.data.length; i += 4) {
             const pixel = getValue(videoBuffer + i, 'i32');
-            backbuffer.data[i + 0] = (pixel >> 16) & 0xff;
-            backbuffer.data[i + 1] = (pixel >> 8) & 0xff;
-            backbuffer.data[i + 2] = (pixel >> 0) & 0xff;
-            backbuffer.data[i + 3] = (pixel >> 24) & 0xff;
+
+            // libretro palette
+            const gammaR = gammaColor((pixel >> 16) & 0xff);
+            const gammaG = gammaColor((pixel >> 8) & 0xff);
+            const gammaB = gammaColor((pixel >> 0) & 0xff);
+            const shadedR = clampToUint8(Math.pow(gammaR * .87 + gammaG * .18 - gammaB * .05, 1 / 2.2) * 255 + .5);
+            const shadedG = clampToUint8(Math.pow(gammaG * .66 + gammaR * .115 + gammaB * .225, 1 / 2.2) * 255 + .5);
+            const shadedB = clampToUint8(Math.pow(gammaB * .79 + gammaR * .14 + gammaG * .07, 1 / 2.2) * 255 + .5);
+
+            backbuffer.data[i + 0] = shadedR;
+            backbuffer.data[i + 1] = shadedG;
+            backbuffer.data[i + 2] = shadedB;
+            backbuffer.data[i + 3] = 0xff;
           }
 
           rendererContext.putImageData(backbuffer, 0, 0);
@@ -213,9 +228,21 @@
           if (pauseInput.innerText === "Pause") {
             pauseInput.innerText = "Play";
             cancelAnimationFrame(animationFrame);
+            audioContext.suspend();
           } else {
             pauseInput.innerText = "Pause";
             animationFrame = requestAnimationFrame(renderLoop);
+            audioContext.resume();
+          }
+        });
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            cancelAnimationFrame(animationFrame);
+            audioContext.suspend();
+          } else {
+            animationFrame = requestAnimationFrame(renderLoop);
+            audioContext.resume();
           }
         });
 
