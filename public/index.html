@@ -49,22 +49,22 @@
     Module.onRuntimeInitialized = () => {
       const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
       const gambatte_create = Module.cwrap('gambatte_create', 'number');
-      const gambatte_load = Module.cwrap('gambatte_load', 'number', ['number', 'string', 'number']);
-      const gambatte_loadbios = Module.cwrap('gambatte_loadbios', 'number', ['number', 'string', 'number', 'number']);
+      const gambatte_loadbuf = Module.cwrap('gambatte_loadbuf', 'number', ['number', 'number', 'number', 'number']);
+      const gambatte_loadbiosbuf = Module.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
       const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
       const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
 
       let buttonsHeld = 0;
       let animationFrame = 0;
 
-      const left = "37";
-      const up = "38";
-      const right = "39";
-      const down = "40";
-      const zForSelectButton = "90";
-      const xForStartButton = "88";
-      const cForBButton = "67";
-      const vForAButton = "86";
+      const left = "ArrowLeft";
+      const up = "ArrowUp";
+      const right = "ArrowRight";
+      const down = "ArrowDown";
+      const zForSelectButton = "KeyZ";
+      const xForStartButton = "KeyX";
+      const cForBButton = "KeyC";
+      const vForAButton = "KeyV";
 
       window.addEventListener("keydown", (event) => {
         event.preventDefault();
@@ -134,12 +134,19 @@
         const biosPath = biosFile.name;
         const romDataArray = new Uint8Array(romData);
         document.getElementById('romHash').innerText = (CRC32.buf(romDataArray) >>> 0).toString(16);
-        FS.writeFile(romPath, new Uint8Array(romData));
-        FS.writeFile(biosPath, new Uint8Array(biosData));
 
         const gb = gambatte_create();
-        console.log('rom load: ' + gambatte_load(gb, romPath, 3));
-        console.log('bios load: ' + gambatte_loadbios(gb, biosPath, 2304, 828843416));
+
+        const romDataPtr = Module._malloc(romData.byteLength);
+        Module.HEAPU8.set(romDataArray, romDataPtr);
+        console.log('rom load: ' + gambatte_loadbuf(gb, romDataPtr, romData.byteLength, 3));
+        Module._free(romDataPtr);
+
+        const biosDataPtr = Module._malloc(romData.byteLength);
+        Module.HEAPU8.set(new Uint8Array(biosData), biosDataPtr);
+        console.log('bios load: ' + gambatte_loadbiosbuf(gb, biosDataPtr, biosData.byteLength));
+        Module._free(biosDataPtr);
+
         gambatte_setinputgetter(gb, callback, 0);
 
         const backbuffer = new ImageData(160, 144);
