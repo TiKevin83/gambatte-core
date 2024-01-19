@@ -134,8 +134,6 @@ readAsync = (filename, onload, onerror, binary = true) => {
     throw toThrow;
   };
 
-  Module['inspect'] = () => '[Emscripten Module object]';
-
 } else
 if (ENVIRONMENT_IS_SHELL) {
 
@@ -1302,6 +1300,9 @@ function dbg(text) {
     };
   
   
+  
+  
+  
     /**
      * @param {string|null=} returnType
      * @param {Array=} argTypes
@@ -1605,8 +1606,7 @@ var _gambatte_loadbiosbuf = Module['_gambatte_loadbiosbuf'] = createExportWrappe
 var _gambatte_runfor = Module['_gambatte_runfor'] = createExportWrapper('gambatte_runfor');
 var _gambatte_setinputgetter = Module['_gambatte_setinputgetter'] = createExportWrapper('gambatte_setinputgetter');
 var _gambatte_cpuread = Module['_gambatte_cpuread'] = createExportWrapper('gambatte_cpuread');
-var ___errno_location = createExportWrapper('__errno_location');
-var _fflush = Module['_fflush'] = createExportWrapper('fflush');
+var _fflush = createExportWrapper('fflush');
 var _emscripten_stack_init = () => (_emscripten_stack_init = wasmExports['emscripten_stack_init'])();
 var _emscripten_stack_get_free = () => (_emscripten_stack_get_free = wasmExports['emscripten_stack_get_free'])();
 var _emscripten_stack_get_base = () => (_emscripten_stack_get_base = wasmExports['emscripten_stack_get_base'])();
@@ -1643,14 +1643,12 @@ var missingLibrarySymbols = [
   'ydayFromDate',
   'arraySum',
   'addDays',
-  'setErrNo',
   'inetPton4',
   'inetNtop4',
   'inetPton6',
   'inetNtop6',
   'readSockaddr',
   'writeSockaddr',
-  'getHostByName',
   'initRandomFill',
   'randomFill',
   'getCallstack',
@@ -1658,7 +1656,6 @@ var missingLibrarySymbols = [
   'convertPCtoSourceLocation',
   'readEmAsmArgs',
   'jstoi_q',
-  'jstoi_s',
   'getExecutableName',
   'listenOnce',
   'autoResumeAudioContext',
@@ -1675,7 +1672,6 @@ var missingLibrarySymbols = [
   'asyncLoad',
   'alignMemory',
   'mmapAlloc',
-  'handleAllocatorInit',
   'HandleAllocator',
   'getNativeTypeSize',
   'STACK_SIZE',
@@ -1702,7 +1698,6 @@ var missingLibrarySymbols = [
   'registerKeyEventCallback',
   'maybeCStringToJsString',
   'findEventTarget',
-  'findCanvasEventTarget',
   'getBoundingClientRect',
   'fillMouseEventData',
   'registerMouseEventCallback',
@@ -1735,7 +1730,6 @@ var missingLibrarySymbols = [
   'registerTouchEventCallback',
   'fillGamepadEventData',
   'registerGamepadEventCallback',
-  'disableGamepadApiIfItThrows',
   'registerBeforeUnloadEventCallback',
   'fillBatteryEventData',
   'battery',
@@ -1801,6 +1795,7 @@ var missingLibrarySymbols = [
   'allocate',
   'writeStringToMemory',
   'writeAsciiToMemory',
+  'setErrNo',
 ];
 missingLibrarySymbols.forEach(missingLibrarySymbol)
 
@@ -1850,6 +1845,7 @@ var unexportedSymbols = [
   'warnOnce',
   'UNWIND_CACHE',
   'readEmAsmArgsArray',
+  'jstoi_s',
   'wasmTable',
   'noExitRuntime',
   'getCFunc',
@@ -1878,6 +1874,7 @@ var unexportedSymbols = [
   'writeArrayToMemory',
   'JSEvents',
   'specialHTMLTargets',
+  'findCanvasEventTarget',
   'currentFullscreenStrategy',
   'restoreOldWindowedStyle',
   'ExitStatus',
