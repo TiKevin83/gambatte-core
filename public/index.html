@@ -12,17 +12,20 @@
       image-rendering: optimize-contrast;
       image-rendering: pixelated;
       -ms-interpolation-mode: nearest-neighbor;
-      width: 640px;
-      height: 576px;
+      width: 480px;
+      height: 432px;
     }
   </style>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
 </head>
 
 <body>
   <div class="row">
-    <div class="col col-4-md">
+    <div class="col col-4-md" id="options">
       <div class="input-group mb-3">
         <label class="input-group-text" for="gameRom">Game ROM</label>
         <input type="file" class="form-control" id="gameRom" />
@@ -35,8 +38,73 @@
       <p id="romHash"></p>
       <button class="btn btn-danger" id="pause">Pause</button>
     </div>
-    <div class="col col-8-md">
-      <canvas id="gameboy" width="160" height="144"></canvas>
+    <div class="col col-8-md" id="gameArea">
+      <div class="row">
+        <div class="col col-2">
+          <div class="row">
+            <div class="col col-4"></div>
+            <div class="col col-4" id="touchUp">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrow-up-square" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M15 2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm8.5 9.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707z" />
+              </svg>
+            </div>
+            <div class="col col-4"></div>
+          </div>
+          <div class="row">
+            <div class="col col-4" id="touchLeft">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M15 2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm11.5 5.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z" />
+              </svg>
+            </div>
+            <div class="col col-4"></div>
+            <div class="col col-4" id="touchRight">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrow-right-square" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M15 2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm4.5 5.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5z" />
+              </svg>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col col-4"></div>
+            <div class="col col-4" id="touchDown">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                class="bi bi-arrow-down-square" viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                  d="M15 2a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm8.5 2.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z" />
+              </svg>
+            </div>
+            <div class="col col-4"></div>
+          </div>
+          <div class="row mt-5">
+            <button class="btn btn-info" id="showHideControls">Options</button>
+          </div>
+        </div>
+        <div class="col col-8">
+          <canvas id="gameboy" width="160" height="144"></canvas>
+        </div>
+        <div class="col col-2 align-items-center">
+          <div class="row">
+            <div class="col col-4"></div>
+            <div class="col col-4 border border-1" id="touchStart">START</div>
+            <div class="col col-4"></div>
+          </div>
+          <div class="row">
+            <div class="col col-4 border border-1" id="touchSelect">SELECT</div>
+            <div class="col col-4"></div>
+            <div class="col col-4 border border-1" id="touchA">A</div>
+          </div>
+          <div class="row">
+            <div class="col col-4"></div>
+            <div class="col col-4 border border-1" id="touchB">B</div>
+            <div class="col col-4"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <script>
@@ -66,6 +134,23 @@
       const cForBButton = "KeyC";
       const vForAButton = "KeyV";
 
+      const showHideOptions = document.getElementById("showHideOptions");
+      const options = document.getElementById("options");
+      const gameArea = document.getElementById("gameArea");
+      showHideControls.addEventListener("click", () => {
+        if (options.classList.contains("d-none")) {
+          options.classList.add("d-block");
+          options.classList.remove("d-none");
+          gameArea.classList.remove("col-12-md");
+          gameArea.classList.add("col-8-md");
+        } else {
+          options.classList.add("d-none");
+          options.classList.remove("d-block");
+          gameArea.classList.remove("col-8-md");
+          gameArea.classList.add("col-12-md");
+        }
+      });
+
       window.addEventListener("keydown", (event) => {
         event.preventDefault();
         buttonsHeld |=
@@ -91,6 +176,111 @@
           Number(event.code !== left) * 0x20 |
           Number(event.code !== up) * 0x40 |
           Number(event.code !== down) * 0x80;
+      });
+
+      const touchStart = document.getElementById("touchStart");
+      const touchSelect = document.getElementById("touchSelect");
+      const touchA = document.getElementById("touchA");
+      const touchB = document.getElementById("touchB");
+      const touchUp = document.getElementById("touchUp");
+      const touchLeft = document.getElementById("touchLeft");
+      const touchRight = document.getElementById("touchRight");
+      const touchDown = document.getElementById("touchDown");
+
+      touchStart.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x08;
+        touchStart.classList.add("bg-info");
+      });
+
+      touchStart.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xf7;
+        touchStart.classList.remove("bg-info");
+      });
+
+      touchSelect.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x04;
+        touchSelect.classList.add("bg-info");
+      });
+
+      touchSelect.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xfb;
+        touchSelect.classList.remove("bg-info");
+      });
+
+      touchA.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x01;
+        touchA.classList.add("bg-info");
+      });
+
+      touchA.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xfe;
+        touchA.classList.remove("bg-info");
+      });
+
+      touchB.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x02;
+        touchB.classList.add("bg-info");
+      });
+
+      touchB.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xfd;
+        touchB.classList.remove("bg-info");
+      });
+
+      touchUp.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x40;
+        touchUp.classList.add("bg-info");
+      });
+
+      touchUp.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xbf;
+        touchUp.classList.remove("bg-info");
+      });
+
+      touchLeft.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x20;
+        touchLeft.classList.add("bg-info");
+      });
+
+      touchLeft.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xdf;
+        touchLeft.classList.remove("bg-info");
+      });
+
+      touchRight.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x10;
+        touchRight.classList.add("bg-info");
+      });
+
+      touchRight.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0xef;
+        touchRight.classList.remove("bg-info");
+      });
+
+      touchDown.addEventListener("touchstart", (event) => {
+        event.preventDefault();
+        buttonsHeld |= 0x80;
+        touchDown.classList.add("bg-info");
+      });
+
+      touchDown.addEventListener("touchend", (event) => {
+        event.preventDefault();
+        buttonsHeld &= 0x7f;
+        touchDown.classList.remove("bg-info");
       });
 
       const callback = Module.addFunction((unused) => buttonsHeld, 'ii');
