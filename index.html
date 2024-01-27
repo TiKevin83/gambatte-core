@@ -20,12 +20,8 @@
       touch-action: none;
     }
 
-    .pointerEventsAuto {
-      pointer-events: auto;
-    }
-
-    .pointerEventsNone {
-      pointer-events: none;
+    .touchActions {
+      touch-action: auto;
     }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -35,28 +31,28 @@
     crossorigin="anonymous"></script>
 </head>
 
-<body class="pointerEventsNone">
+<body class="noTouchActions">
   <div class="container">
     <div class="row">
       <div class="col col-4-md" id="options">
         <div class="input-group mb-3">
           <label class="input-group-text" for="gameRom">Game ROM</label>
-          <input type="file" class="form-control pointerEventsAuto" id="gameRom" />
+          <input type="file" class="form-control touchActions" id="gameRom" />
         </div>
         <div class="input-group mb-3">
           <label class="input-group-text" for="gbcBios">GBC Bios</label>
-          <input type="file" class="form-control pointerEventsAuto" id="gbcBios" />
+          <input type="file" class="form-control touchActions" id="gbcBios" />
         </div>
         <p>ROM Checksum: </p>
         <p id="romHash"></p>
-        <button class="btn btn-danger pointerEventsAuto" id="pause">Pause</button>
+        <button class="btn btn-danger touchActions" id="pause">Pause</button>
       </div>
       <div class="col col-8-md" id="gameArea">
         <div class="row">
-          <div class="col col-2 noTouchActions">
+          <div class="col col-2">
             <div class="row">
               <div class="col col-4"></div>
-              <div class="col col-4 pointerEventsAuto" id="touchUp">
+              <div class="col col-4 touchActions" id="touchUp">
                 <div class="">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
                     class="bi bi-arrow-up-square" viewBox="0 0 16 16">
@@ -67,7 +63,7 @@
                 <div class="col col-4"></div>
               </div>
               <div class="row">
-                <div class="col col-4 pointerEventsAuto" id="touchLeft">
+                <div class="col col-4 touchActions" id="touchLeft">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
                     class="bi bi-arrow-left-square" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
@@ -75,7 +71,7 @@
                   </svg>
                 </div>
                 <div class="col col-4"></div>
-                <div class="col col-4 pointerEventsAuto" id="touchRight">
+                <div class="col col-4 touchActions" id="touchRight">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
                     class="bi bi-arrow-right-square" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
@@ -85,7 +81,7 @@
               </div>
               <div class="row">
                 <div class="col col-4"></div>
-                <div class="col col-4 pointerEventsAuto" id="touchDown">
+                <div class="col col-4 touchActions" id="touchDown">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor"
                     class="bi bi-arrow-down-square" viewBox="0 0 16 16">
                     <path fill-rule="evenodd"
@@ -95,27 +91,27 @@
                 <div class="col col-4"></div>
               </div>
               <div class="row mt-5">
-                <button class="btn btn-info pointerEventsAuto" id="showHideControls">Options</button>
+                <button class="btn btn-info touchActions" id="showHideControls">Options</button>
               </div>
             </div>
           </div>
           <div class="col col-8">
             <canvas id="gameboy" width="160" height="144"></canvas>
           </div>
-          <div class="col col-2 fs-3 noTouchActions">
+          <div class="col col-2 fs-3">
             <div class="row">
               <div class="col col-4"></div>
-              <div class="col col-4 border border-1 pointerEventsAuto" id="touchStart">START</div>
+              <div class="col col-4 border border-1 touchActions" id="pointerenter">START</div>
               <div class="col col-4"></div>
             </div>
             <div class="row">
-              <div class="col col-4 border border-1 pointerEventsAuto" id="touchSelect">SELECT</div>
+              <div class="col col-4 border border-1 touchActions" id="touchSelect">SELECT</div>
               <div class="col col-4"></div>
-              <div class="col col-4 border border-1 pointerEventsAuto" id="touchA">A</div>
+              <div class="col col-4 border border-1 touchActions" id="touchA">A</div>
             </div>
             <div class="row">
               <div class="col col-4"></div>
-              <div class="col col-4 border border-1 pointerEventsAuto" id="touchB">B</div>
+              <div class="col col-4 border border-1 touchActions" id="touchB">B</div>
               <div class="col col-4"></div>
             </div>
           </div>
@@ -195,7 +191,7 @@
           Number(event.code !== down) * 0x80;
       });
 
-      const touchStart = document.getElementById("touchStart");
+      const pointerenter = document.getElementById("pointerenter");
       const touchSelect = document.getElementById("touchSelect");
       const touchA = document.getElementById("touchA");
       const touchB = document.getElementById("touchB");
@@ -204,16 +200,16 @@
       const touchRight = document.getElementById("touchRight");
       const touchDown = document.getElementById("touchDown");
 
-      touchStart.addEventListener("pointerenter", (event) => {
+      pointerenter.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x08;
-        touchStart.classList.add("bg-info");
+        pointerenter.classList.add("bg-info");
       });
 
-      touchStart.addEventListener("pointerleave", (event) => {
+      pointerenter.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xf7;
-        touchStart.classList.remove("bg-info");
+        pointerenter.classList.remove("bg-info");
       });
 
       touchSelect.addEventListener("pointerenter", (event) => {
