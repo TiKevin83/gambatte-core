@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <script src="./libgambatte.js"></script>
+  <script src="./libgambatte.js" type="Module"></script>
   <script src="./crc32.js"></script>
   <style>
     canvas {
@@ -93,7 +93,7 @@
           <div class="col col-2 fs-3">
             <div class="row">
               <div class="col col-4"></div>
-              <div class="col col-4 border border-1" id="touchStart">START</div>
+              <div class="col col-4 border border-1" id="pointerenter">START</div>
               <div class="col col-4"></div>
             </div>
             <div class="row">
@@ -111,20 +111,21 @@
       </div>
     </div>
   </div>
-  <script>
+  <script type="Module">
+    import gambatteModule from './libgambatte.js';
     const gammaColor = (inputColor) => {
       return Math.pow(inputColor / 255, 2.2)
     }
     const clampToUint8 = (input) => {
       return Math.min(Math.max(input, 0), 255)
     }
-    Module.onRuntimeInitialized = () => {
-      const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
-      const gambatte_create = Module.cwrap('gambatte_create', 'number');
-      const gambatte_loadbuf = Module.cwrap('gambatte_loadbuf', 'number', ['number', 'number', 'number', 'number']);
-      const gambatte_loadbiosbuf = Module.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
-      const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
-      const gambatte_setinputgetter = Module.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
+    gambatteModule().then(gambatte => {
+      const gambatte_revision = gambatte.cwrap('gambatte_revision', 'number');
+      const gambatte_create = gambatte.cwrap('gambatte_create', 'number');
+      const gambatte_loadbuf = gambatte.cwrap('gambatte_loadbuf', 'number', ['number', 'number', 'number', 'number']);
+      const gambatte_loadbiosbuf = gambatte.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
+      const gambatte_runfor = gambatte.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
+      const gambatte_setinputgetter = gambatte.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
 
       let buttonsHeld = 0;
       let animationFrame = 0;
@@ -182,7 +183,7 @@
           Number(event.code !== down) * 0x80;
       });
 
-      const touchStart = document.getElementById("touchStart");
+      const pointerenter = document.getElementById("pointerenter");
       const touchSelect = document.getElementById("touchSelect");
       const touchA = document.getElementById("touchA");
       const touchB = document.getElementById("touchB");
@@ -191,103 +192,103 @@
       const touchRight = document.getElementById("touchRight");
       const touchDown = document.getElementById("touchDown");
 
-      touchStart.addEventListener("touchstart", (event) => {
+      pointerenter.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x08;
-        touchStart.classList.add("bg-info");
+        pointerenter.classList.add("bg-info");
       });
 
-      touchStart.addEventListener("touchend", (event) => {
+      pointerenter.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xf7;
-        touchStart.classList.remove("bg-info");
+        pointerenter.classList.remove("bg-info");
       });
 
-      touchSelect.addEventListener("touchstart", (event) => {
+      touchSelect.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x04;
         touchSelect.classList.add("bg-info");
       });
 
-      touchSelect.addEventListener("touchend", (event) => {
+      touchSelect.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xfb;
         touchSelect.classList.remove("bg-info");
       });
 
-      touchA.addEventListener("touchstart", (event) => {
+      touchA.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x01;
         touchA.classList.add("bg-info");
       });
 
-      touchA.addEventListener("touchend", (event) => {
+      touchA.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xfe;
         touchA.classList.remove("bg-info");
       });
 
-      touchB.addEventListener("touchstart", (event) => {
+      touchB.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x02;
         touchB.classList.add("bg-info");
       });
 
-      touchB.addEventListener("touchend", (event) => {
+      touchB.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xfd;
         touchB.classList.remove("bg-info");
       });
 
-      touchUp.addEventListener("touchstart", (event) => {
+      touchUp.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x40;
         touchUp.classList.add("bg-info");
       });
 
-      touchUp.addEventListener("touchend", (event) => {
+      touchUp.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xbf;
         touchUp.classList.remove("bg-info");
       });
 
-      touchLeft.addEventListener("touchstart", (event) => {
+      touchLeft.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x20;
         touchLeft.classList.add("bg-info");
       });
 
-      touchLeft.addEventListener("touchend", (event) => {
+      touchLeft.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xdf;
         touchLeft.classList.remove("bg-info");
       });
 
-      touchRight.addEventListener("touchstart", (event) => {
+      touchRight.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x10;
         touchRight.classList.add("bg-info");
       });
 
-      touchRight.addEventListener("touchend", (event) => {
+      touchRight.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0xef;
         touchRight.classList.remove("bg-info");
       });
 
-      touchDown.addEventListener("touchstart", (event) => {
+      touchDown.addEventListener("pointerenter", (event) => {
         event.preventDefault();
         buttonsHeld |= 0x80;
         touchDown.classList.add("bg-info");
       });
 
-      touchDown.addEventListener("touchend", (event) => {
+      touchDown.addEventListener("pointerleave", (event) => {
         event.preventDefault();
         buttonsHeld &= 0x7f;
         touchDown.classList.remove("bg-info");
       });
 
-      const callback = Module.addFunction((unused) => buttonsHeld, 'ii');
+      const callback = gambatte.addFunction((unused) => buttonsHeld, 'ii');
 
       console.log('revision: ' + gambatte_revision());
 
@@ -319,9 +320,9 @@
 
       const pauseInput = document.getElementById("pause");
 
-      const videoBuffer = Module._malloc(160 * 144 * 4);
-      const audioBuffer = Module._malloc((35112 + 2064) * 4);
-      const samples = Module._malloc(4);
+      const videoBuffer = gambatte._malloc(160 * 144 * 4);
+      const audioBuffer = gambatte._malloc((35112 + 2064) * 4);
+      const samples = gambatte._malloc(4);
 
       const handleGameChange = () => {
         const romPath = romFile.name;
@@ -331,15 +332,15 @@
 
         const gb = gambatte_create();
 
-        const romDataPtr = Module._malloc(romData.byteLength);
-        Module.HEAPU8.set(romDataArray, romDataPtr);
+        const romDataPtr = gambatte._malloc(romData.byteLength);
+        gambatte.HEAPU8.set(romDataArray, romDataPtr);
         console.log('rom load: ' + gambatte_loadbuf(gb, romDataPtr, romData.byteLength, 3));
-        Module._free(romDataPtr);
+        gambatte._free(romDataPtr);
 
-        const biosDataPtr = Module._malloc(romData.byteLength);
-        Module.HEAPU8.set(new Uint8Array(biosData), biosDataPtr);
+        const biosDataPtr = gambatte._malloc(romData.byteLength);
+        gambatte.HEAPU8.set(new Uint8Array(biosData), biosDataPtr);
         console.log('bios load: ' + gambatte_loadbiosbuf(gb, biosDataPtr, biosData.byteLength));
-        Module._free(biosDataPtr);
+        gambatte._free(biosDataPtr);
 
         gambatte_setinputgetter(gb, callback, 0);
 
@@ -373,9 +374,9 @@
             animationFrame = requestAnimationFrame(renderLoop);
             return;
           }
-          setValue(samples, cyclesPerFrame, 'i32');
+          gambatte.setValue(samples, cyclesPerFrame, 'i32');
           gambatte_runfor(gb, videoBuffer, 160, audioBuffer, samples);
-          const bytesProduced = getValue(samples, 'i32') * 4;
+          const bytesProduced = gambatte.getValue(samples, 'i32') * 4;
 
           // process audio output
 
@@ -385,8 +386,8 @@
           const channel2Samples = audioSamples.getChannelData(1);
           for (let sample = 0; sample < channel1Samples.length; sample++) {
             // inverse of the division by 16 when creating the buffer size, same logic
-            channel1Samples[sample] = (getValue(audioBuffer + sample * 16, 'i16') / 32768.0);
-            channel2Samples[sample] = (getValue(audioBuffer + sample * 16 + 2, 'i16') / 32768.0);
+            channel1Samples[sample] = (gambatte.getValue(audioBuffer + sample * 16, 'i16') / 32768.0);
+            channel2Samples[sample] = (gambatte.getValue(audioBuffer + sample * 16 + 2, 'i16') / 32768.0);
           }
 
           // play audio
@@ -403,7 +404,7 @@
           // process video output
 
           for (let i = 0; i < backbuffer.data.length; i += 4) {
-            const pixel = getValue(videoBuffer + i, 'i32');
+            const pixel = gambatte.getValue(videoBuffer + i, 'i32');
 
             // libretro palette
             const gammaR = gammaColor((pixel >> 16) & 0xff);
@@ -442,14 +443,16 @@
             cancelAnimationFrame(animationFrame);
             audioContext.suspend();
           } else {
-            animationFrame = requestAnimationFrame(renderLoop);
-            audioContext.resume();
+            if (pauseInput.innerText === "Pause") {
+              animationFrame = requestAnimationFrame(renderLoop);
+              audioContext.resume();
+            }
           }
         });
 
         animationFrame = requestAnimationFrame(renderLoop);
       }
-    }
+    });
   </script>
 </body>
 
