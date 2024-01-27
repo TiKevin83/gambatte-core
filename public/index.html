@@ -43,6 +43,8 @@
           <label class="input-group-text" for="gbcBios">GBC Bios</label>
           <input type="file" class="form-control touchActions" id="gbcBios" />
         </div>
+        <button class="btn btn-danger touchActions" id="gameSaveState">Save State</button>
+        <button class="btn btn-danger touchActions" id="gameLoadState">Load State</button>
         <p>ROM Checksum: </p>
         <p id="romHash"></p>
         <button class="btn btn-danger touchActions" id="pause">Pause</button>
@@ -134,6 +136,8 @@
       const gambatte_loadbiosbuf = gambatte.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
       const gambatte_runfor = gambatte.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
       const gambatte_setinputgetter = gambatte.cwrap('gambatte_setinputgetter', 'number', ['number', 'number', 'number']);
+      const gambatte_savestate = gambatte.cwrap('gambatte_savestate', 'number', ['number', 'number', 'number', 'number'])
+      const gambatte_loadstate = gambatte.cwrap('gambatte_loadstate', 'number', ['number', 'number', 'number'])
 
       let buttonsHeld = 0;
       let animationFrame = 0;
@@ -349,6 +353,32 @@
         gambatte.HEAPU8.set(new Uint8Array(biosData), biosDataPtr);
         console.log('bios load: ' + gambatte_loadbiosbuf(gb, biosDataPtr, biosData.byteLength));
         gambatte._free(biosDataPtr);
+
+        let saveSatePtr = 0;
+
+        const saveStateButton = document.getElementById("gameSaveState");
+        let stateSize = 0;
+        saveStateButton.addEventListener("click", () => {
+          stateSize = gambatte_savestate(gb, null, null, null);
+          saveSatePtr = gambatte._malloc(stateSize);
+          gambatte_savestate(gb, null, null, saveSatePtr);
+          const saveStateUint8Array = gambatte.HEAPU8.subarray(saveSatePtr, saveSatePtr + stateSize);
+          localStorage.setItem("saveStateData", JSON.stringify(Array.from(saveStateUint8Array)));
+        });
+
+        const loadStateButton = document.getElementById("gameLoadState");
+        loadStateButton.addEventListener("click", () => {
+          const storedSaveData = localStorage.getItem("saveStateData");
+          if (storedSaveData !== null) {
+            const saveStateData = new Uint8Array(Array.from(JSON.parse(storedSaveData)));
+            stateSize = gambatte_savestate(gb, null, null, null);
+            if (saveSatePtr === 0) {
+              saveSatePtr = gambatte._malloc(stateSize);
+            };
+            gambatte.HEAPU8.set(saveStateData, saveSatePtr);
+            gambatte_loadstate(gb, saveSatePtr, stateSize);
+          }
+        });
 
         gambatte_setinputgetter(gb, callback, 0);
 
