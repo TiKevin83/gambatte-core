@@ -45,8 +45,7 @@ gambatte_qt/src/platforms.pri
 gbc_bios.bin
 
 #compiled wasm files
-./libgambatte/libgambatte.mjs
-./public/libgambatte.mjs
+libgambatte.mjs
 
 # vercel secrets
 .vercel

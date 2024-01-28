@@ -31,7 +31,6 @@ const config = {
       },
     ],
   },
-  ignorePatterns: ["libgambatte.mjs"],
 };
 
 module.exports = config;

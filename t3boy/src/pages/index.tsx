@@ -2,52 +2,50 @@
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { AuthShowcase } from "~/components/AuthShowcase/AuthShowcase";
-import gambatteModule from "../components/libgambatte/libgambatte.mjs"
 import { ROMLoader } from "~/components/ROMLoader/ROMLoader";
 import { BIOSLoader } from "~/components/BIOSLoader.tsx/BIOSLoader";
 
+declare const Module: any;
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [gambatte, setGambatte] = useState<any>(null);
   const [romData, setRomData] = useState<ArrayBuffer | null>(null);
   const [biosData, setBiosData] = useState<ArrayBuffer | null>(null);
 
   useEffect(() => {
     const initGambatte = async () => {
-      const gambatteInstance = await gambatteModule();
-      const gambatte_revision = gambatteInstance.cwrap('gambatte_revision', 'number');
+      const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
       console.log('revision: ' + gambatte_revision());
-      setGambatte(gambatteInstance);
     }
     void initGambatte();
   }, []);
 
   useEffect(() => {
-    if (!gambatte || !romData || !biosData || !canvasRef.current) {
+    if (!Module || !romData || !biosData || !canvasRef.current) {
       return;
     };
-    const gambatte_create = gambatte.cwrap('gambatte_create', 'number');
-    const gambatte_loadbuf = gambatte.cwrap('gambatte_loadbuf', 'number', ['number', 'number', 'number', 'number']);
-    const gambatte_loadbiosbuf = gambatte.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
-    const gambatte_runfor = gambatte.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
+    const gambatte_create = Module.cwrap('gambatte_create', 'number');
+    const gambatte_loadbuf = Module.cwrap('gambatte_loadbuf', 'number', ['number', 'number', 'number', 'number']);
+    const gambatte_loadbiosbuf = Module.cwrap('gambatte_loadbiosbuf', 'number', ['number', 'number', 'number']);
+    const gambatte_runfor = Module.cwrap('gambatte_runfor', 'number', ['number', 'number', 'number', 'number', 'number']);
 
-    const videoBufferPointer = gambatte._malloc(160 * 144 * 4);
-    const audioBufferPointer = gambatte._malloc((35112 + 2064) * 4);
-    const samplesEmittedPointer = gambatte._malloc(4);
+    const videoBufferPointer = Module._malloc(160 * 144 * 4);
+    const audioBufferPointer = Module._malloc((35112 + 2064) * 4);
+    const samplesEmittedPointer = Module._malloc(4);
 
     const romDataUint8 = new Uint8Array(romData);
     const biosDataUint8 = new Uint8Array(biosData);
     const gb = gambatte_create();
 
-    const romDataPointer = gambatte._malloc(romData.byteLength);
-    gambatte.HEAPU8.set(romDataUint8, romDataPointer);
+    const romDataPointer = Module._malloc(romData.byteLength);
+    Module.HEAPU8.set(romDataUint8, romDataPointer);
     console.log('rom load: ' + gambatte_loadbuf(gb, romDataPointer, romData.byteLength, 3));
-    gambatte._free(romDataPointer);
+    Module._free(romDataPointer);
 
-    const biosDataPointer = gambatte._malloc(romData.byteLength);
-    gambatte.HEAPU8.set(biosDataUint8, biosDataPointer);
+    const biosDataPointer = Module._malloc(romData.byteLength);
+    Module.HEAPU8.set(biosDataUint8, biosDataPointer);
     console.log('bios load: ' + gambatte_loadbiosbuf(gb, biosDataPointer, biosData.byteLength));
-    gambatte._free(biosDataPointer);
+    Module._free(biosDataPointer);
 
     const backbuffer = new ImageData(160, 144);
 
@@ -80,9 +78,9 @@ export default function Home() {
         animationFrame = requestAnimationFrame(renderLoop);
         return;
       }
-      gambatte.setValue(samplesEmittedPointer, cyclesPerFrame, 'i32');
+      Module.setValue(samplesEmittedPointer, cyclesPerFrame, 'i32');
       gambatte_runfor(gb, videoBufferPointer, 160, audioBufferPointer, samplesEmittedPointer);
-      const bytesProduced = gambatte.getValue(samplesEmittedPointer, 'i32') * 4;
+      const bytesProduced = Module.getValue(samplesEmittedPointer, 'i32') * 4;
 
       // process audio output
 
@@ -92,8 +90,8 @@ export default function Home() {
       const channel2Samples = audioSamples.getChannelData(1);
       for (let sample = 0; sample < channel1Samples.length; sample++) {
         // inverse of the division by 16 when creating the buffer size, same logic
-        channel1Samples[sample] = (gambatte.getValue(audioBufferPointer + sample * 16, 'i16') / 32768.0);
-        channel2Samples[sample] = (gambatte.getValue(audioBufferPointer + sample * 16 + 2, 'i16') / 32768.0);
+        channel1Samples[sample] = (Module.getValue(audioBufferPointer + sample * 16, 'i16') / 32768.0);
+        channel2Samples[sample] = (Module.getValue(audioBufferPointer + sample * 16 + 2, 'i16') / 32768.0);
       }
 
       // play audio
@@ -106,7 +104,7 @@ export default function Home() {
 
       // process video output
       for (let i = 0; i < backbuffer.data.length; i += 4) {
-        const pixel = gambatte.getValue(videoBufferPointer + i, 'i32');
+        const pixel = Module.getValue(videoBufferPointer + i, 'i32');
         backbuffer.data[i + 0] = (pixel >> 16) & 0xff;
         backbuffer.data[i + 1] = (pixel >> 8) & 0xff;
         backbuffer.data[i + 2] = pixel & 0xff;
@@ -134,14 +132,14 @@ export default function Home() {
     animationFrame = requestAnimationFrame(renderLoop);
 
     return () => {
-      gambatte._free(videoBufferPointer);
-      gambatte._free(audioBufferPointer);
-      gambatte._free(samplesEmittedPointer);
+      Module._free(videoBufferPointer);
+      Module._free(audioBufferPointer);
+      Module._free(samplesEmittedPointer);
       cancelAnimationFrame(animationFrame);
       void audioContext.close();
       document.removeEventListener("visibilitychange", visibilityChangeHandler);
     }
-  }, [gambatte, romData, biosData])
+  }, [romData, biosData])
 
   return (
     <>
