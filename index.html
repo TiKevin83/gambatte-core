@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <script src="./libgambatte.js" type="Module"></script>
+  <script src="./libgambatte.mjs" type="Module"></script>
   <script src="./crc32.js"></script>
   <style>
     canvas {
@@ -122,7 +122,7 @@
     </div>
   </div>
   <script type="Module">
-    import gambatteModule from './libgambatte.js';
+    import gambatteModule from './libgambatte.mjs';
     const gammaColor = (inputColor) => {
       return Math.pow(inputColor / 255, 2.2)
     }
@@ -406,6 +406,7 @@
 
         let time = 0;
         let lastBufferDuration = 0;
+        let lastTime = performance.now();
 
         const renderLoop = () => {
           if (!(audioContext.currentTime - time > 0.001 || time == 0)) {
@@ -443,24 +444,16 @@
 
           for (let i = 0; i < backbuffer.data.length; i += 4) {
             const pixel = gambatte.getValue(videoBuffer + i, 'i32');
-
-            // libretro palette
-            const gammaR = gammaColor((pixel >> 16) & 0xff);
-            const gammaG = gammaColor((pixel >> 8) & 0xff);
-            const gammaB = gammaColor((pixel >> 0) & 0xff);
-            const shadedR = clampToUint8(Math.pow(gammaR * .87 + gammaG * .18 - gammaB * .05, 1 / 2.2) * 255 + .5);
-            const shadedG = clampToUint8(Math.pow(gammaG * .66 + gammaR * .115 + gammaB * .225, 1 / 2.2) * 255 + .5);
-            const shadedB = clampToUint8(Math.pow(gammaB * .79 + gammaR * .14 + gammaG * .07, 1 / 2.2) * 255 + .5);
-
-            backbuffer.data[i + 0] = shadedR;
-            backbuffer.data[i + 1] = shadedG;
-            backbuffer.data[i + 2] = shadedB;
+            backbuffer.data[i + 0] = (pixel >> 16) & 0xff;
+            backbuffer.data[i + 1] = (pixel >> 8) & 0xff;
+            backbuffer.data[i + 2] = pixel & 0xff;
             backbuffer.data[i + 3] = 0xff;
           }
 
           rendererContext.putImageData(backbuffer, 0, 0);
           presenterContext.drawImage(renderer, 0, 0);
-
+          const newTime = performance.now();
+          console.log(newTime - lastTime);
           animationFrame = requestAnimationFrame(renderLoop);
         };
 
