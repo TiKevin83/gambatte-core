@@ -16,9 +16,6 @@ jobs:
 
       - name: Build libgambatte js
         run: ./scripts/build_shlib.sh
-
-      - name: copy libgambatte js to public
-        run: "cp ./libgambatte/libgambatte.js ./public/libgambatte.js && cp ./libgambatte/libgambatte.wasm ./public/libgambatte.wasm"
       
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

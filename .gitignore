@@ -44,9 +44,9 @@ gambatte_qt/src/platforms.pri
 # gbc bios must be provided by the user
 gbc_bios.bin
 
-# wasm binaries
-libgambatte.js
-libgambatte.wasm
+#compiled wasm files
+./libgambatte/libgambatte.mjs
+./public/libgambatte.mjs
 
 # vercel secrets
 .vercel
