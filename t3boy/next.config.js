@@ -19,7 +19,7 @@ const config = {
   },
   experimental: {
     outputFileTracingIncludes: {
-      "/**/*": ["./public/libgambatte.wasm", "./public/libgambatte.js"],
+      "/**/*": ["./public/libgambatte.js"],
     },
   },
 };
