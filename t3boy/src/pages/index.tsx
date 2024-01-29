@@ -8,6 +8,7 @@ import { SaveState } from "~/components/SaveState/SaveState";
 import CRC32 from "crc-32";
 
 declare const Module: {
+  onRuntimeInitialized: () => void;
   cwrap: (
     name: string,
     returnType: string,
@@ -21,12 +22,18 @@ declare const Module: {
 };
 
 export default function Home() {
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    setTimeout(() => {
+      setInitialized(true);
+    }, 3000);
+  }, []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [romData, setRomData] = useState<ArrayBuffer | null>(null);
   const [biosData, setBiosData] = useState<ArrayBuffer | null>(null);
   const [gbPointer, setGbPointer] = useState<number | undefined>(undefined);
   const [gameHash, setGameHash] = useState<string | null>(null);
-  useControls(gbPointer);
+  useControls(initialized, gbPointer);
 
   useEffect(() => {
     const gambatte_revision = Module.cwrap("gambatte_revision", "number");
@@ -199,9 +206,15 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
             T3Boy
           </h1>
-          <ROMLoader setRomData={setRomData} />
-          <BIOSLoader setBiosData={setBiosData} />
-          {gameHash && <SaveState gbPointer={gbPointer} gameHash={gameHash} />}
+          {initialized && (
+            <>
+              <ROMLoader setRomData={setRomData} />
+              <BIOSLoader setBiosData={setBiosData} />
+            </>
+          )}
+          {gameHash && initialized && (
+            <SaveState gbPointer={gbPointer} gameHash={gameHash} />
+          )}
           <div className="flex flex-col items-center gap-2">
             <canvas
               ref={canvasRef}

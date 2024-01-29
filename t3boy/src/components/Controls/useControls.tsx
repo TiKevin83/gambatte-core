@@ -18,7 +18,7 @@ const xForStartButton = "KeyX";
 const cForBButton = "KeyC";
 const vForAButton = "KeyV";
 
-export const useControls = (gbPointer?: number) => {
+export const useControls = (initialized: boolean, gbPointer?: number) => {
   const [gambatteInputGetter, setGambatteInputGetter] = useState<
     ((arg0: number, arg1: number, arg2: number) => undefined) | null
   >(null);
@@ -57,6 +57,9 @@ export const useControls = (gbPointer?: number) => {
   }, []);
 
   useEffect(() => {
+    if (!initialized) {
+      return;
+    }
     setGambatteInputGetter(() =>
       Module.cwrap("gambatte_setinputgetter", "number", [
         "number",
@@ -65,7 +68,7 @@ export const useControls = (gbPointer?: number) => {
       ]),
     );
     setButtonsFunctionPointer(Module.addFunction(() => buttons.current, "ii"));
-  }, []);
+  }, [initialized]);
 
   useEffect(() => {
     if (
