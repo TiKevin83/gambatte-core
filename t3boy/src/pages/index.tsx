@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AuthShowcase } from "~/components/AuthShowcase/AuthShowcase";
 import { ROMLoader } from "~/components/ROMLoader/ROMLoader";
 import { BIOSLoader } from "~/components/BIOSLoader.tsx/BIOSLoader";
+import { useControls } from "~/components/Controls/Controls";
 
 declare const Module: any;
 
@@ -11,17 +12,16 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [romData, setRomData] = useState<ArrayBuffer | null>(null);
   const [biosData, setBiosData] = useState<ArrayBuffer | null>(null);
+  const [gbPointer, setGbPointer] = useState<number | undefined>(undefined);
+  useControls(gbPointer);
 
   useEffect(() => {
-    const initGambatte = async () => {
-      const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
-      console.log('revision: ' + gambatte_revision());
-    }
-    void initGambatte();
+    const gambatte_revision = Module.cwrap('gambatte_revision', 'number');
+    console.log('revision: ' + gambatte_revision());
   }, []);
 
   useEffect(() => {
-    if (!Module || !romData || !biosData || !canvasRef.current) {
+    if (!romData || !biosData || !canvasRef.current) {
       return;
     };
     const gambatte_create = Module.cwrap('gambatte_create', 'number');
@@ -36,6 +36,7 @@ export default function Home() {
     const romDataUint8 = new Uint8Array(romData);
     const biosDataUint8 = new Uint8Array(biosData);
     const gb = gambatte_create();
+    setGbPointer(gb as number);
 
     const romDataPointer = Module._malloc(romData.byteLength);
     Module.HEAPU8.set(romDataUint8, romDataPointer);
