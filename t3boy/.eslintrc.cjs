@@ -1,4 +1,5 @@
 /** @type {import("eslint").Linter.Config} */
+
 const config = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -9,6 +10,7 @@ const config = {
     "next/core-web-vitals",
     "plugin:@typescript-eslint/strict-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
+    "plugin:prettier/recommended",
   ],
   rules: {
     // These opinionated rules are enabled in stylistic-type-checked above.
