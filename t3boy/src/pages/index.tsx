@@ -36,9 +36,12 @@ export default function Home() {
   useControls(initialized, gbPointer);
 
   useEffect(() => {
+    if (!initialized) {
+      return;
+    }
     const gambatte_revision = Module.cwrap("gambatte_revision", "number");
     console.log("revision: " + (gambatte_revision() as number));
-  }, []);
+  }, [initialized]);
 
   useEffect(() => {
     if (!romData || !biosData || !canvasRef.current) {
