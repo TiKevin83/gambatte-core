@@ -17,6 +17,11 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  experimental: {
+    outputFileTracingIncludes: {
+      "/**/*": ["./public/libgambatte.wasm", "./public/libgambatte.js"],
+    },
+  },
 };
 
 export default config;
