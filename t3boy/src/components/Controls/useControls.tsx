@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useKeyMappingStore } from "./useKeyMappingStore";
 
 declare const Module: {
   cwrap: (
@@ -9,15 +10,6 @@ declare const Module: {
   addFunction: (func: () => number, signature: string) => number;
 };
 
-const left = "ArrowLeft";
-const up = "ArrowUp";
-const right = "ArrowRight";
-const down = "ArrowDown";
-const zForSelectButton = "KeyZ";
-const xForStartButton = "KeyX";
-const cForBButton = "KeyC";
-const vForAButton = "KeyV";
-
 export const useControls = (initialized: boolean, gbPointer?: number) => {
   const [gambatteInputGetter, setGambatteInputGetter] = useState<
     ((arg0: number, arg1: number, arg2: number) => undefined) | null
@@ -26,35 +18,60 @@ export const useControls = (initialized: boolean, gbPointer?: number) => {
     number | null
   >(null);
   const buttons = useRef(0);
+  const keyMapping = useKeyMappingStore((state) => state.keyMapping);
 
-  const keyDownHandler = useCallback((event: KeyboardEvent) => {
-    if (event.repeat) {
-      return;
-    }
-    event.preventDefault();
-    buttons.current |=
-      (Number(event.code === vForAButton) * 0x01) |
-      (Number(event.code === cForBButton) * 0x02) |
-      (Number(event.code === zForSelectButton) * 0x04) |
-      (Number(event.code === xForStartButton) * 0x08) |
-      (Number(event.code === right) * 0x10) |
-      (Number(event.code === left) * 0x20) |
-      (Number(event.code === up) * 0x40) |
-      (Number(event.code === down) * 0x80);
-  }, []);
+  const keyDownHandler = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.repeat) {
+        return;
+      }
+      event.preventDefault();
+      buttons.current |=
+        (Number(event.code === keyMapping.a) * 0x01) |
+        (Number(event.code === keyMapping.b) * 0x02) |
+        (Number(event.code === keyMapping.select) * 0x04) |
+        (Number(event.code === keyMapping.start) * 0x08) |
+        (Number(event.code === keyMapping.right) * 0x10) |
+        (Number(event.code === keyMapping.left) * 0x20) |
+        (Number(event.code === keyMapping.up) * 0x40) |
+        (Number(event.code === keyMapping.down) * 0x80);
+    },
+    [
+      keyMapping.a,
+      keyMapping.b,
+      keyMapping.down,
+      keyMapping.left,
+      keyMapping.right,
+      keyMapping.select,
+      keyMapping.start,
+      keyMapping.up,
+    ],
+  );
 
-  const keyUpHandler = useCallback((event: KeyboardEvent) => {
-    event.preventDefault();
-    buttons.current &=
-      (Number(event.code !== vForAButton) * 0x01) |
-      (Number(event.code !== cForBButton) * 0x02) |
-      (Number(event.code !== zForSelectButton) * 0x04) |
-      (Number(event.code !== xForStartButton) * 0x08) |
-      (Number(event.code !== right) * 0x10) |
-      (Number(event.code !== left) * 0x20) |
-      (Number(event.code !== up) * 0x40) |
-      (Number(event.code !== down) * 0x80);
-  }, []);
+  const keyUpHandler = useCallback(
+    (event: KeyboardEvent) => {
+      event.preventDefault();
+      buttons.current &=
+        (Number(event.code !== keyMapping.a) * 0x01) |
+        (Number(event.code !== keyMapping.b) * 0x02) |
+        (Number(event.code !== keyMapping.select) * 0x04) |
+        (Number(event.code !== keyMapping.start) * 0x08) |
+        (Number(event.code !== keyMapping.right) * 0x10) |
+        (Number(event.code !== keyMapping.left) * 0x20) |
+        (Number(event.code !== keyMapping.up) * 0x40) |
+        (Number(event.code !== keyMapping.down) * 0x80);
+    },
+    [
+      keyMapping.a,
+      keyMapping.b,
+      keyMapping.down,
+      keyMapping.left,
+      keyMapping.right,
+      keyMapping.select,
+      keyMapping.start,
+      keyMapping.up,
+    ],
+  );
 
   useEffect(() => {
     if (!initialized) {

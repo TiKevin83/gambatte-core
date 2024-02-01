@@ -6,6 +6,7 @@ import { BIOSLoader } from "~/components/BIOSLoader/BIOSLoader";
 import { useControls } from "~/components/Controls/useControls";
 import { SaveState } from "~/components/SaveState/SaveState";
 import CRC32 from "crc-32";
+import ControlRemapButtons from "~/components/Controls/ControlRemapButtons";
 
 declare const Module: {
   onRuntimeInitialized: () => void;
@@ -33,6 +34,7 @@ export default function Home() {
   const [biosData, setBiosData] = useState<ArrayBuffer | null>(null);
   const [gbPointer, setGbPointer] = useState<number | undefined>(undefined);
   const [gameHash, setGameHash] = useState<string | null>(null);
+  const [showOptions, setShowOptions] = useState(true);
   useControls(initialized, gbPointer);
 
   useEffect(() => {
@@ -209,14 +211,29 @@ export default function Home() {
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
             T3Boy
           </h1>
-          {initialized && (
+          <button
+            className="block cursor-pointer rounded-lg border border-gray-300 bg-gray-50 px-2 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
+            onClick={() => {
+              setShowOptions((currentShowOptions) => {
+                return !currentShowOptions;
+              });
+            }}
+          >
+            {showOptions ? "hide options" : "show options"}
+          </button>
+          {showOptions && (
             <>
-              <ROMLoader setRomData={setRomData} />
-              <BIOSLoader setBiosData={setBiosData} />
+              {initialized && (
+                <>
+                  <ROMLoader setRomData={setRomData} />
+                  <BIOSLoader setBiosData={setBiosData} />
+                </>
+              )}
+              {gameHash && initialized && (
+                <SaveState gbPointer={gbPointer} gameHash={gameHash} />
+              )}
+              <ControlRemapButtons />
             </>
-          )}
-          {gameHash && initialized && (
-            <SaveState gbPointer={gbPointer} gameHash={gameHash} />
           )}
           <div className="flex flex-col items-center gap-2">
             <canvas
