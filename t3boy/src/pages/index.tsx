@@ -35,7 +35,7 @@ export default function Home() {
   const [gbPointer, setGbPointer] = useState<number | undefined>(undefined);
   const [gameHash, setGameHash] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(true);
-  useControls(initialized, gbPointer);
+  const { gambatteReset } = useControls(initialized, gbPointer);
 
   useEffect(() => {
     if (!initialized) {
@@ -106,7 +106,7 @@ export default function Home() {
 
     // reduce volume
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = 0.06; // 6 %
+    gainNode.gain.value = 0.01; // 1 %
     gainNode.connect(audioContext.destination);
 
     const cyclesPerFrame = 35112;
@@ -225,7 +225,10 @@ export default function Home() {
             <>
               {initialized && (
                 <>
-                  <ROMLoader setRomData={setRomData} />
+                  <ROMLoader
+                    setRomData={setRomData}
+                    gameHash={gameHash ?? undefined}
+                  />
                   <BIOSLoader setBiosData={setBiosData} />
                 </>
               )}

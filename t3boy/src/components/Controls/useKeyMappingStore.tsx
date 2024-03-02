@@ -10,11 +10,14 @@ export enum GameBoyKey {
   b = "b",
   start = "start",
   select = "select",
+  reset = "reset",
 }
 
 interface KeyMappingState {
   keyMapping: Record<GameBoyKey, string>;
   setKeyMapping: (key: GameBoyKey, value: string) => void;
+  keyMappingInProgress: boolean;
+  setKeyMappingInProgress: (inProgress: boolean) => void;
 }
 
 export const useKeyMappingStore = create<KeyMappingState>()(
@@ -29,9 +32,14 @@ export const useKeyMappingStore = create<KeyMappingState>()(
         b: "KeyC",
         start: "KeyX",
         select: "KeyZ",
+        reset: "KeyR",
       },
-      setKeyMapping: (key: GameBoyKey, value: string) => {
+      setKeyMapping: (key, value) => {
         set({ keyMapping: { ...get().keyMapping, [key]: value } });
+      },
+      keyMappingInProgress: false,
+      setKeyMappingInProgress: (inProgress) => {
+        set({ keyMappingInProgress: inProgress });
       },
     }),
     {

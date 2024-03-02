@@ -2,9 +2,10 @@ import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
   setRomData: Dispatch<SetStateAction<ArrayBuffer | null>>;
+  gameHash?: string;
 }
 
-export const ROMLoader: React.FC<Props> = ({ setRomData }) => {
+export const ROMLoader: React.FC<Props> = ({ setRomData, gameHash }) => {
   const handleROMChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const romFile = e.target.files?.[0];
     void romFile?.arrayBuffer().then((arrayBuffer) => {
@@ -19,6 +20,7 @@ export const ROMLoader: React.FC<Props> = ({ setRomData }) => {
         htmlFor="gameRom"
       >
         Game ROM
+        {!!gameHash ? ` - Current Checksum ${gameHash.toUpperCase()}` : null}
       </label>
       <input
         type="file"

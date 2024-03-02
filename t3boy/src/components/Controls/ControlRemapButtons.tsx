@@ -3,16 +3,20 @@ import { GameBoyKey, useKeyMappingStore } from "./useKeyMappingStore";
 
 const ControlRemapButtons: React.FC = () => {
   const [showKeyMapping, setShowKeyMapping] = useState(false);
-  const { keyMapping, setKeyMapping } = useKeyMappingStore((state) => ({
-    keyMapping: state.keyMapping,
-    setKeyMapping: state.setKeyMapping,
-  }));
+  const { keyMapping, setKeyMapping, setKeyMappingInProgress } =
+    useKeyMappingStore((state) => ({
+      keyMapping: state.keyMapping,
+      setKeyMapping: state.setKeyMapping,
+      setKeyMappingInProgress: state.setKeyMappingInProgress,
+    }));
 
   const handleRemapClick = (key: GameBoyKey) => {
+    setKeyMappingInProgress(true);
     const remapKey = (e: KeyboardEvent) => {
       setKeyMapping(key, e.code);
       buttonBeingRemapped.innerText = `Remap ${key} - currently set to ${e.code}`;
       window.removeEventListener("keydown", remapKey);
+      setKeyMappingInProgress(false);
     };
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const buttonBeingRemapped = document.getElementById(`remap-${key}`)!;

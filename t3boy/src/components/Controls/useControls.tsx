@@ -3,29 +3,39 @@ import { useKeyMappingStore } from "./useKeyMappingStore";
 
 declare const Module: {
   cwrap: (
-    name: "gambatte_setinputgetter",
-    returnType: string,
+    name: string,
+    returnType: string | null,
     argTypes: string[],
-  ) => (arg0: number, arg1: number, arg2: number) => undefined;
+  ) => (...args: unknown[]) => unknown;
   addFunction: (func: () => number, signature: string) => number;
 };
 
 export const useControls = (initialized: boolean, gbPointer?: number) => {
   const [gambatteInputGetter, setGambatteInputGetter] = useState<
-    ((arg0: number, arg1: number, arg2: number) => undefined) | null
+    ((...args: unknown[]) => unknown) | null
   >(null);
   const [buttonsFunctionPointer, setButtonsFunctionPointer] = useState<
     number | null
   >(null);
+  const [gambatteReset, setGambatteReset] = useState<
+    ((...args: unknown[]) => unknown) | null
+  >(null);
   const buttons = useRef(0);
-  const keyMapping = useKeyMappingStore((state) => state.keyMapping);
+  const { keyMapping, keyMappingInProgress } = useKeyMappingStore((state) => ({
+    keyMapping: state.keyMapping,
+    keyMappingInProgress: state.keyMappingInProgress,
+  }));
 
   const keyDownHandler = useCallback(
     (event: KeyboardEvent) => {
-      if (event.repeat) {
+      if (event.repeat || keyMappingInProgress) {
         return;
       }
       event.preventDefault();
+      if (event.code === keyMapping.reset && gambatteReset) {
+        gambatteReset(gbPointer, 101 * (2 << 14));
+        return;
+      }
       buttons.current |=
         (Number(event.code === keyMapping.a) * 0x01) |
         (Number(event.code === keyMapping.b) * 0x02) |
@@ -37,14 +47,18 @@ export const useControls = (initialized: boolean, gbPointer?: number) => {
         (Number(event.code === keyMapping.down) * 0x80);
     },
     [
+      keyMappingInProgress,
+      keyMapping.reset,
       keyMapping.a,
       keyMapping.b,
-      keyMapping.down,
-      keyMapping.left,
-      keyMapping.right,
       keyMapping.select,
       keyMapping.start,
+      keyMapping.right,
+      keyMapping.left,
       keyMapping.up,
+      keyMapping.down,
+      gambatteReset,
+      gbPointer,
     ],
   );
 
@@ -85,6 +99,9 @@ export const useControls = (initialized: boolean, gbPointer?: number) => {
       ]),
     );
     setButtonsFunctionPointer(Module.addFunction(() => buttons.current, "ii"));
+    setGambatteReset(() =>
+      Module.cwrap("gambatte_reset", null, ["number", "number"]),
+    );
   }, [initialized]);
 
   useEffect(() => {
@@ -109,4 +126,6 @@ export const useControls = (initialized: boolean, gbPointer?: number) => {
       window.removeEventListener("keyup", keyUpHandler);
     };
   }, [keyDownHandler, keyUpHandler]);
+
+  return { gambatteReset };
 };

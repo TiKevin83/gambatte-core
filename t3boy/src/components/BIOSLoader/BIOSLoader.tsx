@@ -8,8 +8,16 @@ export const BIOSLoader: React.FC<Props> = ({ setBiosData }) => {
   const handleROMChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const biosFile = e.target.files?.[0];
     void biosFile?.arrayBuffer().then((arrayBuffer) => {
-      setBiosData(arrayBuffer);
+      setBiosData(patchBiosForGbcGba(arrayBuffer));
     });
+  };
+
+  const patchBiosForGbcGba = (gbcBiosData: ArrayBuffer) => {
+    const patchedBios = new Uint8Array(gbcBiosData);
+    patchedBios[0xf3] ^= 0x03;
+    patchedBios.copyWithin(0xf5, 0xf6, 0xfb);
+    patchedBios[0xfb] ^= 0x74;
+    return patchedBios.buffer as ArrayBuffer;
   };
 
   return (
