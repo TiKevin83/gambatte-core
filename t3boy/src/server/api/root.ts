@@ -1,5 +1,6 @@
 import { createTRPCRouter } from "~/server/api/trpc";
 import { saveStateRouter } from "./routers/saveState";
+import { gameSaveRouter } from "./routers/gameSave";
 
 /**
  * This is the primary router for your server.
@@ -8,6 +9,7 @@ import { saveStateRouter } from "./routers/saveState";
  */
 export const appRouter = createTRPCRouter({
   saveState: saveStateRouter,
+  gameSave: gameSaveRouter,
 });
 
 // export type definition of API

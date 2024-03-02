@@ -85,6 +85,7 @@ export const SaveState: React.FC<Props> = ({ gbPointer, gameHash }) => {
       const newSaveStatePointer = saveStatePointer ?? Module._malloc(stateSize);
       Module.HEAPU8.set(saveStateData, newSaveStatePointer);
       loadState(gbPointer, newSaveStatePointer, stateSize);
+      setSaveStatePointer(newSaveStatePointer);
     }
   }, [
     existingSaveForGameAndUser.data?.state,
@@ -100,7 +101,7 @@ export const SaveState: React.FC<Props> = ({ gbPointer, gameHash }) => {
         onClick={handleSaveState}
         className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
       >
-        Save State
+        Save State to Cloud
       </button>
       {existingSaveForGameAndUser.data?.state &&
         !updateSaveForGameAndUser.isLoading && (
@@ -108,7 +109,7 @@ export const SaveState: React.FC<Props> = ({ gbPointer, gameHash }) => {
             onClick={handleLoadState}
             className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 dark:placeholder-gray-400"
           >
-            Load State
+            Load State from Cloud
           </button>
         )}
     </div>

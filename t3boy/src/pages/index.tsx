@@ -7,6 +7,7 @@ import { useControls } from "~/components/Controls/useControls";
 import { SaveState } from "~/components/SaveState/SaveState";
 import CRC32 from "crc-32";
 import ControlRemapButtons from "~/components/Controls/ControlRemapButtons";
+import { GameSave } from "~/components/GameSave/GameSave";
 
 declare const Module: {
   onRuntimeInitialized: () => void;
@@ -233,7 +234,10 @@ export default function Home() {
                 </>
               )}
               {gameHash && initialized && (
-                <SaveState gbPointer={gbPointer} gameHash={gameHash} />
+                <>
+                  <GameSave gbPointer={gbPointer} gameHash={gameHash} />
+                  <SaveState gbPointer={gbPointer} gameHash={gameHash} />
+                </>
               )}
               <ControlRemapButtons />
             </>

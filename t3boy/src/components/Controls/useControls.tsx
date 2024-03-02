@@ -8,6 +8,7 @@ declare const Module: {
     argTypes: string[],
   ) => (...args: unknown[]) => unknown;
   addFunction: (func: () => number, signature: string) => number;
+  _free: (pointer: number) => void;
 };
 
 export const useControls = (initialized: boolean, gbPointer?: number) => {
@@ -102,6 +103,12 @@ export const useControls = (initialized: boolean, gbPointer?: number) => {
     setGambatteReset(() =>
       Module.cwrap("gambatte_reset", null, ["number", "number"]),
     );
+    return () => {
+      if (buttonsFunctionPointer) {
+        Module._free(buttonsFunctionPointer);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialized]);
 
   useEffect(() => {
